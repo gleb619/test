@@ -6,6 +6,7 @@ import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -64,16 +65,16 @@ public class MainActivity extends DefaultActivity {
             super.onAfterCreate();
             boolean isGranted = isStoragePermissionGranted();
             if (isGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                helperRegister.onWork(() -> onStart(savedInstanceState));
-            } else {
-                onStart(savedInstanceState);
+                helperRegister.onWork(() -> onActivityStart(savedInstanceState));
+            } else if (isGranted) {
+                onActivityStart(savedInstanceState);
             }
         } catch (Exception e) {
             Log.e(TAG, "onCreate: ", e);
         }
     }
 
-    private void onStart(Bundle savedInstanceState) {
+    private void onActivityStart(Bundle savedInstanceState) {
         if (Boolean.TRUE.toString().equals(project.value(HIGH_PERFORMANCE_MODE))) {
             getWindow().setFlags(
                     WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
@@ -210,6 +211,14 @@ public class MainActivity extends DefaultActivity {
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            helperRegister.onWork(() -> onActivityStart(null));
+        }
+    }
+
     class Task extends AsyncTask<Void, Void, String> {
 
         @Override
@@ -244,5 +253,4 @@ public class MainActivity extends DefaultActivity {
             Toast.makeText(MainActivity.this, result, Toast.LENGTH_LONG).show();
         }
     }
-
 }
